@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление зоопарком</title>
+</head>
+<body>
+<h1>Добавление животного</h1>
+
+<form id="animalForm">
+    <label>Вид: <input type="text" name="species" required></label><br>
+    <label>Имя: <input type="text" name="name" required></label><br>
+    <label>Дата рождения: <input type="date" name="birthDate" required></label><br>
+    <label>Пол: <input type="text" name="gender" required></label><br>
+    <label>Любимая еда: <input type="text" name="favoriteFood" required></label><br>
+    <label>Состояние здоровья: <input type="text" name="healthStatus" required></label><br>
+    <button type="submit">Добавить</button>
+</form>
+
+<hr>
+
+<h2>Удаление животного</h2>
+<form id="deleteAnimalForm">
+    <label>Имя животного: <input type="text" name="name" required></label><br>
+    <button type="submit">Удалить</button>
+</form>
+
+<h2>Перемещение животного в другой вольер</h2>
+<form id="moveAnimalForm">
+    <label>Имя животного: <input type="text" name="animalName" required></label><br>
+    <label>Название нового вольера: <input type="text" name="enclosureName" required></label><br>
+    <button type="submit">Переместить животное</button>
+</form>
+
+<hr>
+<h2>Список всех животных</h2>
+<button id="loadAnimalsButton">Загрузить список животных</button>
+<table style="margin-top: 10px;" border="1">
+    <thead>
+    <tr>
+        <th>Имя</th>
+        <th>Вид</th>
+        <th>Вольер</th>
+    </tr>
+    </thead>
+    <tbody id="animal-table-body">
+    </tbody>
+</table>
+<hr>
+
+<h2>Добавление вольера</h2>
+<form id="enclosureForm">
+    <label>Название: <input type="text" name="enclosureName" required></label><br>
+    <label>Размер (м²): <input type="number" name="maxCapacity" required></label><br>
+    <label>Тип: <input type="text" name="type" required></label><br>
+    <button type="submit">Добавить вольер</button>
+</form>
+
+<h2>Удалить вольер</h2>
+<form id="deleteEnclosureForm">
+    <label>Название вольера: <input type="text" name="nameToDelete" required></label>
+    <button type="submit">Удалить</button>
+</form>
+
+<h2>Добавление расписания кормления</h2>
+<form id="feedingScheduleForm">
+    <label>Название: <input type="text" name="name" required></label><br>
+    <label>Имя животное: <input type="text" name="animalName" required> </label><br>
+    <label>Время кормления: <input type="time" name="feedingTime" required></label><br>
+    <label>Тип корма: <input type="text" name="foodType" required></label><br>
+    <button type="submit">Добавить расписание кормления</button>
+</form>
+
+<h2>Удаление расписания кормления</h2>
+<form id="deleteFeedingScheduleForm">
+    <label>Название расписания: <input type="text" name="name" required></label><br>
+    <button type="submit">Удалить расписание кормления</button>
+</form>
+
+<h2>Удаление животного из списка</h2>
+<form id="deleteFeedingScheduleFormByAnimal">
+    <label for="name">Название списка:</label>
+    <input type="text" id="name" name="name" required>
+    <br>
+    <label for="animalName">Имя животного:</label>
+    <input type="text" id="animalName" name="animalName" required>
+    <br>
+    <button type="submit">Удалить кормление</button>
+</form>
+
+<h2>Получить Кормления по Названию Списка</h2>
+<form id="getFeedingByName">
+    <label for="listName">Название списка:</label>
+    <input type="text" id="listName" required>
+    <button type="submit">Получить кормления</button>
+</form>
+
+<hr>
+
+<div id="result"></div>
+
+<script>
+    // Добавление животного
+    document.getElementById('animalForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = {
+            species: form.species.value,
+            name: form.name.value,
+            birthDate: form.birthDate.value,
+            gender: form.gender.value,
+            favoriteFood: form.favoriteFood.value,
+            healthStatus: form.healthStatus.value
+        };
+        const response = await fetch('/api/animals', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const text = await response.text();
+        document.getElementById('result').innerText = text;
+        form.reset();
+    });
+
+    // Удаление животного
+    document.getElementById('deleteAnimalForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const name = e.target.name.value;
+        const response = await fetch(`/api/animals/${encodeURIComponent(name)}`, {
+            method: 'DELETE'
+        });
+        const text = await response.text();
+        document.getElementById('result').innerText = text;
+        e.target.reset();
+    });
+
+    // Перемещение животного в другой вольер
+    document.getElementById('moveAnimalForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = {
+            animalName: form.animalName.value,
+            enclosureName: form.enclosureName.value
+        };
+
+        const response = await fetch('/api/animals/move', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        const text = await response.text();
+        document.getElementById('moveResult').innerText = text;
+        form.reset();
+    });
+
+    // Вывести список животных
+    document.getElementById('loadAnimalsButton').addEventListener('click', async () => {
+        fetch('/api/animals')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('animal-table-body');
+                data.forEach(animal => {
+                    const row = document.createElement('tr');
+
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = animal.name;
+                    row.appendChild(nameCell);
+
+                    const speciesCell = document.createElement('td');
+                    speciesCell.textContent = animal.species;
+                    row.appendChild(speciesCell);
+
+                    const enclosureCell = document.createElement('td');
+                    enclosureCell.textContent = animal.enclosureName;
+                    row.appendChild(enclosureCell);
+
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки:', error);
+            });
+    });
+
+
+    // Добавление вольера
+    document.getElementById('enclosureForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = {
+            name: form.enclosureName.value,
+            maxCapacity: form.maxCapacity.value,
+            type: form.type.value
+        };
+        const response = await fetch('/api/enclosures', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const text = await response.text();
+        document.getElementById('result').innerText = text;
+        form.reset();
+    });
+
+    // Удалить вольер
+    document.getElementById('deleteEnclosureForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const name = e.target.nameToDelete.value;
+        const response = await fetch(`/api/enclosures/${encodeURIComponent(name)}`, {
+            method: 'DELETE'
+        });
+        const text = await response.text();
+        document.getElementById('deleteResult').innerText = text;
+        e.target.reset();
+    });
+
+    // Добавить расписание
+    document.getElementById('feedingScheduleForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const data = {
+            name: form.name.value,
+            animalName: form.animalName.value,
+            feedingTime: form.feedingTime.value,
+            foodType: form.foodType.value
+        };
+        const response = await fetch('/api/feedings', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const text = await response.text();
+        document.getElementById('result').innerText = text;
+        form.reset();
+    });
+
+    // Удалить расписание
+    document.getElementById('deleteFeedingScheduleForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const name = e.target.name.value;
+        const response = await fetch(`/api/feedings/${encodeURIComponent(name)}`, {
+            method: 'DELETE'
+        });
+        const text = await response.text();
+        document.getElementById('result').innerText = text;
+        e.target.reset();
+    });
+
+    // Удалить животное из списка
+    document.getElementById('deleteFeedingScheduleFormByAnimal').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const name = e.target.name.value;
+        const animalName = e.target.animalName.value;
+
+        const url = `/api/feedings/${encodeURIComponent(name)}/${encodeURIComponent(animalName)}`;
+        try {
+            const response = await fetch(url, {
+                method: 'DELETE'
+            });
+
+            const text = await response.text();
+            document.getElementById('result').innerText = text;
+        } catch (error) {
+            console.error("Ошибка:", error);
+            document.getElementById('result').innerText = "Произошла ошибка при удалении.";
+        }
+
+        e.target.reset();
+    });
+
+    // Получить список кормления по названию
+    document.getElementById('getFeedingByName').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const listName = form.listName.value;
+
+        try {
+            const response = await fetch(`/api/feedings/list/${encodeURIComponent(listName)}`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка при получении данных');
+            }
+
+            const feedings = await response.json();
+            displayFeedings(feedings);
+        } catch (error) {
+            console.error("Ошибка:", error);
+            document.getElementById('result').innerText = "Произошла ошибка при получении данных.";
+        }
+
+        form.reset();
+    });
+
+
+    // Функция для отображения полученных кормлений
+    function displayFeedings(feedings) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = ''; // Очищаем предыдущие результаты
+
+        if (feedings.length === 0) {
+            resultDiv.innerText = "Нет кормлений для данного списка.";
+            return;
+        }
+
+        const ul = document.createElement('ul');
+        feedings.forEach(feeding => {
+            const li = document.createElement('li');
+            li.innerText = `Животное: ${feeding.animalName}, Время кормления: ${feeding.feedingTime}, Тип корма: ${feeding.foodType}`;
+            ul.appendChild(li);
+        });
+
+        resultDiv.appendChild(ul);
+    }
+</script>
+</body>
+</html>

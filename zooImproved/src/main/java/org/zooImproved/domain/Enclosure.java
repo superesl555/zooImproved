@@ -1,19 +1,33 @@
-package org.zooImproved;
+package org.zooImproved.domain;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
 public class Enclosure {
-    private String type;
-    private double size;
-    private List<Animal> animals;
-    private int maxCapacity;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // автоинкрементируемый id
+    private Long id;
 
-    public Enclosure(String type, double size, int maxCapacity) {
-        this.type = type;
-        this.size = size;
+    private String name;
+    private String type;
+    private int maxCapacity;
+    private double size;
+
+    @OneToMany(mappedBy = "enclosure", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Animal> animals = new ArrayList<>();
+
+    public Enclosure() {}
+
+    public Enclosure(String name, String type, int maxCapacity) {
+        this.name = name;
         this.maxCapacity = maxCapacity;
-        this.animals = new ArrayList<>();
+        this.type = type;
+        this.size = 0;
     }
 
     public boolean addAnimal(Animal animal) {
@@ -41,6 +55,20 @@ public class Enclosure {
         System.out.println("The enclosure has been cleaned.");
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() { return name; }
+
+    public void maxCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public String getType() {
         return type;
     }
@@ -55,5 +83,13 @@ public class Enclosure {
 
     public int getMaxCapacity() {
         return maxCapacity;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public List<Animal> getAnimals() {
+        return animals;
     }
 }

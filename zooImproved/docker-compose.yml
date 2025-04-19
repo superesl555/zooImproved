@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: zoo_container
+    environment:
+      POSTGRES_USER: zoo_user
+      POSTGRES_PASSWORD: zoo_pass
+      POSTGRES_DB: zoo_db
+    ports:
+      - "5555:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

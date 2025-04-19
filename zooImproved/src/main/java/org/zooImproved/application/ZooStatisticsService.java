@@ -1,4 +1,6 @@
-package org.zooImproved;
+package org.zooImproved.application;
+
+import org.zooImproved.domain.Enclosure;
 
 import java.util.List;
 
